@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Retirada de EPI</title>
+</head>
+<body>
+
+<h2>Retirada de EPI</h2>
+
+<label>Matrícula:</label><br>
+<input type="text" id="matricula"><br><br>
+
+<label>EPI:</label><br>
+<select id="epi">
+  <option value="Luva">Luva</option>
+  <option value="Capacete">Capacete</option>
+  <option value="Óculos">Óculos</option>
+</select><br><br>
+
+<label>Quantidade:</label><br>
+<input type="number" id="quantidade" value="1"><br><br>
+
+<button id="btnEnviar" onclick="enviar()">Enviar</button>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyAVVO0gkgHsPth-A2f6ZAlxNnOJm8AFjQs",
+    authDomain: "teste-api-70d67.firebaseapp.com",
+    projectId: "teste-api-70d67",
+    storageBucket: "teste-api-70d67.firebasestorage.app",
+    messagingSenderId: "269358394096",
+    appId: "1:269358394096:web:02ef771a437d062174b035"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  window.enviar = async function () {
+    const matricula = document.getElementById("matricula").value.trim();
+    const epi = document.getElementById("epi").value;
+    const quantidade = parseInt(document.getElementById("quantidade").value);
+
+    // Validação
+    if (!matricula || quantidade <= 0 || isNaN(quantidade)) {
+      alert("Preencha corretamente os campos!");
+      return;
+    }
+
+    const btn = document.getElementById("btnEnviar");
+    btn.disabled = true;
+    btn.innerText = "Enviando...";
+
+    try {
+      await addDoc(collection(db, "pedidos"), {
+        matricula: matricula,
+        epi: epi,
+        quantidade: quantidade,
+        data: new Date().toISOString(),
+        status: "pendente"
+      });
+
+      alert("Pedido enviado!");
+
+      // Limpar campos
+      document.getElementById("matricula").value = "";
+      document.getElementById("quantidade").value = 1;
+      document.getElementById("epi").value = "Luva";
+
+    } catch (erro) {
+      console.error(erro);
+      alert("Erro ao enviar pedido!");
+    }
+
+    btn.disabled = false;
+    btn.innerText = "Enviar";
+  };
+</script>
+
+</body>
+</html>
