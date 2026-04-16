@@ -1,83 +1,291 @@
 <!DOCTYPE html>
-<html>
+<html lang="pt-br">
 <head>
-  <meta charset="UTF-8">
-  <title>Retirada de EPI</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Retirada de EPI</title>
+
+<style>
+:root {
+  --bg: #eef2f6;
+  --card: #ffffff;
+  --text: #111;
+  --primary: #1e88e5;
+}
+
+body.dark {
+  --bg: #0f172a;
+  --card: #1e293b;
+  --text: #f1f5f9;
+}
+
+body {
+  margin: 0;
+  font-family: Arial;
+  background: var(--bg);
+  color: var(--text);
+  transition: 0.3s;
+}
+
+.app {
+  max-width: 420px;
+  margin: auto;
+  padding: 15px;
+}
+
+/* HEADER */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 10px 0 20px;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: bold;
+}
+
+/* 🔥 LOGO DOBRADA */
+.logo img {
+  width: 130px;   /* antes 65px → DOBRADO */
+  height: 130px;
+  object-fit: contain;
+}
+
+.toggle {
+  cursor: pointer;
+  font-size: 14px;
+}
+
+/* CARD */
+.card {
+  background: var(--card);
+  padding: 12px;
+  border-radius: 12px;
+  margin-bottom: 10px;
+}
+
+/* 🔥 MATRÍCULA MAIS LARGA */
+input {
+  width: 95%;   /* antes 85% → aumentado */
+  padding: 10px;
+  border-radius: 10px;
+  border: 1px solid #ccc;
+  font-size: 14px;
+}
+
+/* GRID */
+.epi-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.epi {
+  background: var(--card);
+  border: 2px solid transparent;
+  border-radius: 12px;
+  padding: 10px;
+  text-align: center;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.epi img {
+  width: 60px;
+  height: 60px;
+}
+
+/* CARRINHO */
+.item {
+  border: 1px solid #ddd;
+  padding: 10px;
+  border-radius: 10px;
+  margin-top: 8px;
+  position: relative;
+}
+
+.remove {
+  position: absolute;
+  top: 5px;
+  right: 8px;
+  cursor: pointer;
+  color: red;
+  font-weight: bold;
+}
+
+/* INPUTS */
+select,
+input[type="number"] {
+  width: 100%;
+  padding: 6px;
+  font-size: 12px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  box-sizing: border-box;
+}
+
+/* BOTÃO */
+button {
+  width: 100%;
+  padding: 14px;
+  background: var(--primary);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  margin-top: 10px;
+}
+</style>
 </head>
+
 <body>
 
-<h2>Retirada de EPI</h2>
+<div class="app">
 
-<label>Matrícula:</label><br>
-<input type="text" id="matricula"><br><br>
+  <!-- HEADER -->
+  <div class="header">
+    <div class="logo">
+      <img src="imagens/logo_csn.png">
+      EPI System
+    </div>
+    <div class="toggle" onclick="toggleDark()">🌙</div>
+  </div>
 
-<label>EPI:</label><br>
-<select id="epi">
-  <option value="Luva">Luva</option>
-  <option value="Capacete">Capacete</option>
-  <option value="Óculos">Óculos</option>
-</select><br><br>
+  <!-- MATRÍCULA -->
+  <div class="card">
+    <input id="matricula" placeholder="Matrícula (ex: CSP7815)">
+  </div>
 
-<label>Quantidade:</label><br>
-<input type="number" id="quantidade" value="1"><br><br>
+  <!-- CATÁLOGO -->
+  <div class="card">
+    <b>EPIs</b>
 
-<button id="btnEnviar" onclick="enviar()">Enviar</button>
+    <div class="epi-grid">
+
+      <div class="epi" onclick="add('Luva')">
+        <img src="imagens/Luva de Proteção Térmica.png"><br>
+        Luva
+      </div>
+
+      <div class="epi" onclick="add('Capacete')">
+        <img src="imagens/Capacete cinza.jfif"><br>
+        Capacete
+      </div>
+
+      <div class="epi" onclick="add('Óculos')">
+        <img src="imagens/Óculos Uvex Aerospec 3000.jfif"><br>
+        Óculos
+      </div>
+
+      <div class="epi" onclick="add('Botina')">
+        <img src="imagens/Bota Eletricista.png"><br>
+        Botina
+      </div>
+
+    </div>
+  </div>
+
+  <!-- CARRINHO -->
+  <div class="card">
+    <b>Solicitação</b>
+    <div id="carrinho"></div>
+  </div>
+
+  <button onclick="enviar()">ENVIAR</button>
+
+</div>
 
 <script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-  import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyAVVO0gkgHsPth-A2f6ZAlxNnOJm8AFjQs",
-    authDomain: "teste-api-70d67.firebaseapp.com",
-    projectId: "teste-api-70d67",
-    storageBucket: "teste-api-70d67.firebasestorage.app",
-    messagingSenderId: "269358394096",
-    appId: "1:269358394096:web:02ef771a437d062174b035"
-  };
+const firebaseConfig = {
+  apiKey: "SUA_API",
+  authDomain: "teste-api-70d67.firebaseapp.com",
+  projectId: "teste-api-70d67",
+  storageBucket: "teste-api-70d67.firebasestorage.app",
+  messagingSenderId: "269358394096",
+  appId: "1:269358394096:web:02ef771a437d062174b035"
+};
 
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
 
-  window.enviar = async function () {
-    const matricula = document.getElementById("matricula").value.trim();
-    const epi = document.getElementById("epi").value;
-    const quantidade = parseInt(document.getElementById("quantidade").value);
+let pedido = [];
 
-    // Validação
-    if (!matricula || quantidade <= 0 || isNaN(quantidade)) {
-      alert("Preencha corretamente os campos!");
-      return;
-    }
+/* DARK MODE */
+window.toggleDark = function () {
+  document.body.classList.toggle("dark");
+};
 
-    const btn = document.getElementById("btnEnviar");
-    btn.disabled = true;
-    btn.innerText = "Enviando...";
+/* ADD EPI */
+window.add = function(epi){
+  pedido.push({
+    epi,
+    tamanho: "M",
+    quantidade: 1
+  });
+  render();
+};
 
-    try {
-      await addDoc(collection(db, "pedidos"), {
-        matricula: matricula,
-        epi: epi,
-        quantidade: quantidade,
-        data: new Date().toISOString(),
-        status: "pendente"
-      });
+/* REMOVE ITEM */
+window.removeItem = function(index){
+  pedido.splice(index,1);
+  render();
+};
 
-      alert("Pedido enviado!");
+/* RENDER */
+function render(){
+  let html = "";
 
-      // Limpar campos
-      document.getElementById("matricula").value = "";
-      document.getElementById("quantidade").value = 1;
-      document.getElementById("epi").value = "Luva";
+  pedido.forEach((p,i)=>{
+    html += `
+      <div class="item">
+        <div class="remove" onclick="removeItem(${i})">✖</div>
 
-    } catch (erro) {
-      console.error(erro);
-      alert("Erro ao enviar pedido!");
-    }
+        <b>${p.epi}</b>
 
-    btn.disabled = false;
-    btn.innerText = "Enviar";
-  };
+        <select onchange="pedido[${i}].tamanho=this.value">
+          <option>P</option>
+          <option>M</option>
+          <option>G</option>
+          <option>GG</option>
+        </select>
+
+        <input type="number" min="1" value="${p.quantidade}"
+        onchange="pedido[${i}].quantidade=this.value">
+      </div>
+    `;
+  });
+
+  document.getElementById("carrinho").innerHTML = html;
+}
+
+window.render = render;
+
+/* ENVIAR */
+window.enviar = async function () {
+  const matricula = document.getElementById("matricula").value;
+
+  if (!matricula || pedido.length === 0) {
+    alert("Preencha tudo!");
+    return;
+  }
+
+  await addDoc(collection(db,"pedidos"),{
+    matricula,
+    itens: pedido,
+    status: "pendente",
+    data: new Date().toISOString()
+  });
+
+  alert("Enviado!");
+  location.reload();
+};
 </script>
 
 </body>
